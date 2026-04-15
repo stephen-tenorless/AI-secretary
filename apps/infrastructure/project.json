@@ -1,0 +1,29 @@
+{
+  "name": "infrastructure",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/infrastructure/src",
+  "projectType": "application",
+  "tags": ["scope:infra", "type:app"],
+  "targets": {
+    "build": {
+      "command": "tsc",
+      "options": {
+        "cwd": "apps/infrastructure"
+      }
+    },
+    "synth": {
+      "command": "cdk synth",
+      "options": {
+        "cwd": "apps/infrastructure"
+      },
+      "dependsOn": ["build"]
+    },
+    "deploy": {
+      "command": "cdk deploy --all --require-approval never",
+      "options": {
+        "cwd": "apps/infrastructure"
+      },
+      "dependsOn": ["build"]
+    }
+  }
+}

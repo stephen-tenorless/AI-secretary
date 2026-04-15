@@ -1,0 +1,29 @@
+{
+  "name": "@ai-secretary/source",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start:mobile": "nx run mobile:start",
+    "build:mobile": "nx run mobile:build",
+    "deploy:infra": "nx run infrastructure:deploy",
+    "test": "nx run-many --target=test --all",
+    "lint": "nx run-many --target=lint --all"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@nx/js": "22.6.5",
+    "@swc-node/register": "1.11.1",
+    "@swc/core": "1.15.8",
+    "@swc/helpers": "0.5.18",
+    "nx": "22.6.5",
+    "prettier": "^3.8.1",
+    "tslib": "^2.3.0",
+    "typescript": "~5.9.2"
+  },
+  "workspaces": [
+    "apps/*",
+    "libs/*",
+    "packages/*"
+  ]
+}
