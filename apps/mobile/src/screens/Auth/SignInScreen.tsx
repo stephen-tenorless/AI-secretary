@@ -12,7 +12,8 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../../utils/theme';
 import { useStore } from '../../store/useStore';
-import { authApi, setApiToken } from '../../services/api';
+import { setApiToken } from '../../services/api';
+import { signIn as cognitoSignIn, signUp as cognitoSignUp } from '../../services/cognito';
 
 export function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -32,13 +33,13 @@ export function SignInScreen() {
     setLoading(true);
     try {
       const result = isSignUp
-        ? await authApi.signUp(email, password, name)
-        : await authApi.signIn(email, password);
+        ? await cognitoSignUp(email, password, name)
+        : await cognitoSignIn(email, password);
 
-      if (result.success && result.data) {
-        setApiToken(result.data.token);
-        setAuth(result.data.token);
-        setUser(result.data.user);
+      if (result.success && result.token) {
+        setApiToken(result.token);
+        setAuth(result.token);
+        setUser({ id: email, email, name: name || email.split('@')[0] });
       } else {
         Alert.alert('Error', result.error || 'Authentication failed');
       }
