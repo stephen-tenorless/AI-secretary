@@ -9,11 +9,16 @@
     "destroy": "cdk destroy --all"
   },
   "dependencies": {
-    "@ai-secretary/shared": "*",
+    "@ai-secretary/shared": "workspace:*",
     "aws-cdk-lib": "^2.170.0",
     "constructs": "^10.4.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1030.0",
+    "@aws-sdk/client-dynamodb": "^3.1030.0",
+    "@aws-sdk/client-sqs": "^3.1030.0",
+    "@aws-sdk/lib-dynamodb": "^3.1030.0",
+    "@types/aws-lambda": "^8.10.161",
     "@types/node": "^22.0.0",
     "aws-cdk": "^2.170.0",
     "typescript": "~5.9.2"

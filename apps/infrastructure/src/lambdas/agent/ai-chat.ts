@@ -4,6 +4,7 @@ import { DynamoDBDocumentClient, QueryCommand, PutCommand } from '@aws-sdk/lib-d
 import {
   BedrockRuntimeClient,
   ConverseCommand,
+  Tool,
 } from '@aws-sdk/client-bedrock-runtime';
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -12,7 +13,7 @@ const TABLE_NAME = process.env.TABLE_NAME!;
 const MODEL_ID = 'anthropic.claude-sonnet-4-20250514';
 
 // Tool definitions for Claude to manage the user's life
-const TOOLS = [
+const TOOLS: Tool[] = [
   {
     toolSpec: {
       name: 'create_task',
