@@ -12,7 +12,11 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../../utils/theme';
 import { useStore } from '../../store/useStore';
-import { authApi, setApiToken } from '../../services/api';
+import { setApiToken } from '../../services/api';
+import {
+  signIn as cognitoSignIn,
+  signUp as cognitoSignUp,
+} from '../../services/cognito';
 
 export function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -32,13 +36,13 @@ export function SignInScreen() {
     setLoading(true);
     try {
       const result = isSignUp
-        ? await authApi.signUp(email, password, name)
-        : await authApi.signIn(email, password);
+        ? await cognitoSignUp(email, password, name)
+        : await cognitoSignIn(email, password);
 
-      if (result.success && result.data) {
-        setApiToken(result.data.token);
-        setAuth(result.data.token);
-        setUser(result.data.user);
+      if (result.success && result.token) {
+        setApiToken(result.token);
+        setAuth(result.token);
+        setUser({ id: email, email, name: name || email.split('@')[0] });
       } else {
         Alert.alert('Error', result.error || 'Authentication failed');
       }
@@ -59,9 +63,7 @@ export function SignInScreen() {
           <Feather name="cpu" size={48} color={colors.primary} />
         </View>
         <Text style={styles.title}>AI Secretary</Text>
-        <Text style={styles.subtitle}>
-          Your intelligent personal assistant
-        </Text>
+        <Text style={styles.subtitle}>Your intelligent personal assistant</Text>
       </View>
 
       <View style={styles.form}>
@@ -110,7 +112,11 @@ export function SignInScreen() {
           disabled={loading}
         >
           <Text style={styles.submitText}>
-            {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+            {loading
+              ? 'Please wait...'
+              : isSignUp
+                ? 'Create Account'
+                : 'Sign In'}
           </Text>
         </TouchableOpacity>
 
@@ -133,7 +139,11 @@ export function SignInScreen() {
           { icon: 'zap', text: 'AI-powered scheduling' },
         ].map((feature) => (
           <View key={feature.icon} style={styles.featureItem}>
-            <Feather name={feature.icon as any} size={16} color={colors.accent} />
+            <Feather
+              name={feature.icon as any}
+              size={16}
+              color={colors.accent}
+            />
             <Text style={styles.featureText}>{feature.text}</Text>
           </View>
         ))}

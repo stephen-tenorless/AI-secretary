@@ -10,7 +10,6 @@
     "test": "nx run-many --target=test --all",
     "lint": "nx run-many --target=lint --all"
   },
-  "dependencies": {},
   "devDependencies": {
     "@nx/js": "22.6.5",
     "@swc-node/register": "1.11.1",
