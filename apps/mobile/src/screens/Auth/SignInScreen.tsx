@@ -2,62 +2,98 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../../utils/theme';
 import { useStore } from '../../store/useStore';
 import { setApiToken } from '../../services/api';
-import {
-  signIn as cognitoSignIn,
-  signUp as cognitoSignUp,
-} from '../../services/cognito';
+import { signInWithGoogle, signInWithApple } from '../../services/oauth';
 
 export function SignInScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const { setAuth, setUser } = useStore();
 
-  const handleSubmit = async () => {
-    if (!email || !password || (isSignUp && !name)) {
-      Alert.alert('Missing Fields', 'Please fill in all required fields.');
-      return;
-    }
-
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const result = isSignUp
-        ? await cognitoSignUp(email, password, name)
-        : await cognitoSignIn(email, password);
+      const result = await signInWithGoogle();
 
-      if (result.success && result.token) {
+      if (result.success && result.token && result.user) {
         setApiToken(result.token);
         setAuth(result.token);
-        setUser({ id: email, email, name: name || email.split('@')[0] });
+        setUser({
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferences: {
+            wakeUpTime: '07:00',
+            sleepTime: '22:00',
+            workStartTime: '09:00',
+            workEndTime: '17:00',
+            preferredReminderLeadMinutes: 15,
+            enableSmartGrouping: true,
+            enableProactiveReminders: true,
+            notificationChannels: ['push'],
+          },
+          integrations: {},
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       } else {
-        Alert.alert('Error', result.error || 'Authentication failed');
+        Alert.alert('Error', result.error || 'Google sign-in failed');
       }
-    } catch (err) {
-      Alert.alert('Error', 'Network error. Please try again.');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithApple();
+
+      if (result.success && result.token && result.user) {
+        setApiToken(result.token);
+        setAuth(result.token);
+        setUser({
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferences: {
+            wakeUpTime: '07:00',
+            sleepTime: '22:00',
+            workStartTime: '09:00',
+            workEndTime: '17:00',
+            preferredReminderLeadMinutes: 15,
+            enableSmartGrouping: true,
+            enableProactiveReminders: true,
+            notificationChannels: ['push'],
+          },
+          integrations: {},
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        Alert.alert('Info', result.error || 'Apple sign-in not available');
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Feather name="cpu" size={48} color={colors.primary} />
@@ -66,70 +102,38 @@ export function SignInScreen() {
         <Text style={styles.subtitle}>Your intelligent personal assistant</Text>
       </View>
 
-      <View style={styles.form}>
-        {isSignUp && (
-          <View style={styles.inputContainer}>
-            <Feather name="user" size={20} color={colors.textMuted} />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              placeholderTextColor={colors.textMuted}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-            />
-          </View>
-        )}
-
-        <View style={styles.inputContainer}>
-          <Feather name="mail" size={20} color={colors.textMuted} />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={colors.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Feather name="lock" size={20} color={colors.textMuted} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={colors.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
-
+      <View style={styles.authButtons}>
         <TouchableOpacity
-          style={[styles.submitButton, loading && styles.submitDisabled]}
-          onPress={handleSubmit}
+          style={[styles.oauthButton, styles.googleButton]}
+          onPress={handleGoogleSignIn}
           disabled={loading}
         >
-          <Text style={styles.submitText}>
-            {loading
-              ? 'Please wait...'
-              : isSignUp
-                ? 'Create Account'
-                : 'Sign In'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color={colors.text} />
+          ) : (
+            <>
+              <Feather name="chrome" size={20} color={colors.text} />
+              <Text style={styles.oauthButtonText}>Continue with Google</Text>
+            </>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.toggleButton}
-          onPress={() => setIsSignUp(!isSignUp)}
-        >
-          <Text style={styles.toggleText}>
-            {isSignUp
-              ? 'Already have an account? Sign In'
-              : "Don't have an account? Sign Up"}
-          </Text>
-        </TouchableOpacity>
+        {Platform.OS === 'ios' && (
+          <TouchableOpacity
+            style={[styles.oauthButton, styles.appleButton]}
+            onPress={handleAppleSignIn}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Feather name="smartphone" size={20} color={colors.white} />
+                <Text style={styles.appleButtonText}>Continue with Apple</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.features}>
@@ -148,7 +152,11 @@ export function SignInScreen() {
           </View>
         ))}
       </View>
-    </KeyboardAvoidingView>
+
+      <Text style={styles.disclaimer}>
+        By continuing, you agree to our Terms of Service and Privacy Policy
+      </Text>
+    </View>
   );
 }
 
@@ -161,7 +169,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xl * 2,
   },
   logoContainer: {
     width: 80,
@@ -180,51 +188,40 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     textAlign: 'center',
   },
-  form: {
+  authButtons: {
     gap: spacing.md,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xl * 2,
   },
-  inputContainer: {
+  oauthButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
     borderWidth: 1,
+  },
+  googleButton: {
+    backgroundColor: colors.white,
     borderColor: colors.border,
   },
-  input: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    paddingLeft: spacing.sm,
+  appleButton: {
+    backgroundColor: colors.text,
+    borderColor: colors.text,
+  },
+  oauthButtonText: {
     color: colors.text,
     fontSize: 16,
+    fontWeight: '600',
   },
-  submitButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  submitDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
+  appleButtonText: {
     color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
-  toggleButton: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  toggleText: {
-    ...typography.bodySmall,
-    color: colors.primary,
-  },
   features: {
     gap: spacing.sm,
+    marginBottom: spacing.xl,
   },
   featureItem: {
     flexDirection: 'row',
@@ -234,5 +231,10 @@ const styles = StyleSheet.create({
   },
   featureText: {
     ...typography.bodySmall,
+  },
+  disclaimer: {
+    ...typography.bodySmall,
+    textAlign: 'center',
+    color: colors.textMuted,
   },
 });
