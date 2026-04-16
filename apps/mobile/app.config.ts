@@ -37,7 +37,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
   ],
   extra: {
-    apiUrl: process.env.API_URL || 'https://vqqp2yoa4h.execute-api.us-east-1.amazonaws.com/prod',
+    apiUrl:
+      process.env.API_URL ||
+      'https://vqqp2yoa4h.execute-api.us-east-1.amazonaws.com/prod',
     cognitoUserPoolId: 'us-east-1_Uw5riBKhs',
     cognitoClientId: '29uv5nv5rn5d9hks1iq790japm',
     eas: {

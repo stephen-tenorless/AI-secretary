@@ -1,6 +1,10 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, QueryCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb';
 import {
   BedrockRuntimeClient,
   ConverseCommand,
@@ -24,21 +28,46 @@ const TOOLS: Tool[] = [
           type: 'object',
           properties: {
             title: { type: 'string', description: 'Short task title' },
-            description: { type: 'string', description: 'Detailed description' },
+            description: {
+              type: 'string',
+              description: 'Detailed description',
+            },
             category: {
               type: 'string',
-              enum: ['home', 'work', 'personal', 'health', 'errands', 'finance'],
+              enum: [
+                'home',
+                'work',
+                'personal',
+                'health',
+                'errands',
+                'finance',
+              ],
             },
-            priority: { type: 'string', enum: ['urgent', 'high', 'medium', 'low'] },
-            dueDate: { type: 'string', description: 'ISO 8601 date when task is due' },
-            location: { type: 'string', description: 'Where the task takes place' },
-            estimatedMinutes: { type: 'number', description: 'Estimated time in minutes' },
+            priority: {
+              type: 'string',
+              enum: ['urgent', 'high', 'medium', 'low'],
+            },
+            dueDate: {
+              type: 'string',
+              description: 'ISO 8601 date when task is due',
+            },
+            location: {
+              type: 'string',
+              description: 'Where the task takes place',
+            },
+            estimatedMinutes: {
+              type: 'number',
+              description: 'Estimated time in minutes',
+            },
             prerequisites: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
-                  type: { type: 'string', enum: ['time_before', 'task_dependency', 'condition'] },
+                  type: {
+                    type: 'string',
+                    enum: ['time_before', 'task_dependency', 'condition'],
+                  },
                   description: { type: 'string' },
                   hoursBeforeTask: { type: 'number' },
                 },
@@ -114,7 +143,10 @@ const TOOLS: Tool[] = [
           type: 'object',
           properties: {
             category: { type: 'string' },
-            status: { type: 'string', enum: ['pending', 'in_progress', 'completed'] },
+            status: {
+              type: 'string',
+              enum: ['pending', 'in_progress', 'completed'],
+            },
           },
         },
       },
@@ -145,7 +177,10 @@ const TOOLS: Tool[] = [
         json: {
           type: 'object',
           properties: {
-            name: { type: 'string', description: 'Group name, e.g., "Home Depot Run"' },
+            name: {
+              type: 'string',
+              description: 'Group name, e.g., "Home Depot Run"',
+            },
             taskIds: { type: 'array', items: { type: 'string' } },
             reasoning: {
               type: 'string',
@@ -154,7 +189,8 @@ const TOOLS: Tool[] = [
             suggestedDate: { type: 'string' },
             suggestedRoute: {
               type: 'string',
-              description: 'Suggested order of stops, e.g., "Home Depot → CVS → Grocery Store"',
+              description:
+                'Suggested order of stops, e.g., "Home Depot → CVS → Grocery Store"',
             },
             estimatedTotalMinutes: { type: 'number' },
           },
@@ -184,7 +220,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             ':pk': `USER#${userId}`,
             ':prefix': 'TASK#',
           },
-        })
+        }),
       ),
       dynamo.send(
         new QueryCommand({
@@ -195,7 +231,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             ':pk': `USER#${userId}#EVENT`,
             ':today': new Date().toISOString().split('T')[0],
           },
-        })
+        }),
       ),
       dynamo.send(
         new QueryCommand({
@@ -205,12 +241,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
             ':pk': `USER#${userId}`,
             ':sk': 'PROFILE',
           },
-        })
+        }),
       ),
     ]);
 
     const tasks = (tasksResult.Items || []).filter(
-      (t: any) => t.status !== 'completed' && t.status !== 'cancelled'
+      (t: any) => t.status !== 'completed' && t.status !== 'cancelled',
     );
     const events_data = eventsResult.Items || [];
     const profile = profileResult.Items?.[0];
@@ -218,7 +254,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const systemPrompt = buildSystemPrompt(profile, tasks, events_data);
 
     // Call Claude with tool use
-    const messages: any[] = [{ role: 'user', content: [{ text: userMessage }] }];
+    const messages: any[] = [
+      { role: 'user', content: [{ text: userMessage }] },
+    ];
 
     const actions: any[] = [];
     let finalResponse = '';
@@ -231,7 +269,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           system: [{ text: systemPrompt }],
           messages,
           toolConfig: { tools: TOOLS },
-        })
+        }),
       );
 
       const outputMessage = bedrockResponse.output?.message;
@@ -254,7 +292,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
               toolName!,
               toolInput,
               userId,
-              dynamo
+              dynamo,
             );
             actions.push({
               type: toolName,
@@ -299,11 +337,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   }
 };
 
-function buildSystemPrompt(
-  profile: any,
-  tasks: any[],
-  events: any[]
-): string {
+function buildSystemPrompt(profile: any, tasks: any[], events: any[]): string {
   const now = new Date();
   const timezone = profile?.timezone || 'America/New_York';
 
@@ -326,7 +360,7 @@ ${tasks
   .slice(0, 20)
   .map(
     (t: any) =>
-      `- [${t.priority}] ${t.title} (${t.category})${t.location ? ` @ ${t.location}` : ''}${t.dueDate ? ` due: ${t.dueDate}` : ''}`
+      `- [${t.priority}] ${t.title} (${t.category})${t.location ? ` @ ${t.location}` : ''}${t.dueDate ? ` due: ${t.dueDate}` : ''}`,
   )
   .join('\n')}
 
@@ -335,7 +369,7 @@ ${events
   .slice(0, 10)
   .map(
     (e: any) =>
-      `- ${e.title} at ${e.startTime}${e.location ? ` @ ${e.location}` : ''}`
+      `- ${e.title} at ${e.startTime}${e.location ? ` @ ${e.location}` : ''}`,
   )
   .join('\n')}
 
@@ -352,7 +386,7 @@ async function executeToolCall(
   toolName: string,
   input: any,
   userId: string,
-  dynamo: DynamoDBDocumentClient
+  dynamo: DynamoDBDocumentClient,
 ): Promise<any> {
   const now = new Date().toISOString();
   const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -381,9 +415,13 @@ async function executeToolCall(
             GSI1SK: `pending#${input.dueDate || '9999-12-31'}`,
             ...task,
           },
-        })
+        }),
       );
-      return { success: true, taskId: id, message: `Task "${input.title}" created` };
+      return {
+        success: true,
+        taskId: id,
+        message: `Task "${input.title}" created`,
+      };
     }
 
     case 'create_event': {
@@ -407,9 +445,13 @@ async function executeToolCall(
             GSI1SK: input.startTime,
             ...evt,
           },
-        })
+        }),
       );
-      return { success: true, eventId: id, message: `Event "${input.title}" created` };
+      return {
+        success: true,
+        eventId: id,
+        message: `Event "${input.title}" created`,
+      };
     }
 
     case 'set_smart_reminder': {
@@ -437,7 +479,7 @@ async function executeToolCall(
             acknowledged: false,
             createdAt: now,
           },
-        })
+        }),
       );
       return {
         success: true,
@@ -455,14 +497,16 @@ async function executeToolCall(
             ':pk': `USER#${userId}`,
             ':prefix': 'TASK#',
           },
-        })
+        }),
       );
 
       let tasks = (result.Items || []).filter(
-        (t: any) => t.status !== 'cancelled'
+        (t: any) => t.status !== 'cancelled',
       );
-      if (input.category) tasks = tasks.filter((t: any) => t.category === input.category);
-      if (input.status) tasks = tasks.filter((t: any) => t.status === input.status);
+      if (input.category)
+        tasks = tasks.filter((t: any) => t.category === input.category);
+      if (input.status)
+        tasks = tasks.filter((t: any) => t.status === input.status);
 
       return {
         tasks: tasks.map((t: any) => ({
@@ -487,13 +531,13 @@ async function executeToolCall(
             ':pk': `USER#${userId}#EVENT`,
             ':start': input.startDate,
           },
-        })
+        }),
       );
 
       let events = result.Items || [];
       if (input.endDate) {
         events = events.filter(
-          (e: any) => e.startTime <= input.endDate + 'T23:59:59Z'
+          (e: any) => e.startTime <= input.endDate + 'T23:59:59Z',
         );
       }
 
@@ -528,7 +572,7 @@ async function executeToolCall(
             accepted: false,
             createdAt: now,
           },
-        })
+        }),
       );
       return {
         success: true,

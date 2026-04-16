@@ -18,7 +18,10 @@ function generateDevToken(email: string): string {
   return `dev-token-${email}-${Date.now()}`;
 }
 
-export async function signIn(email: string, password: string): Promise<AuthResult> {
+export async function signIn(
+  email: string,
+  password: string,
+): Promise<AuthResult> {
   if (DEV_MODE_SKIP_AUTH) {
     console.log('[DEV MODE] Bypassing Cognito auth for:', email);
     // In dev mode, accept any non-empty credentials
@@ -32,10 +35,18 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 
   // Real Cognito auth would go here when DEV_MODE_SKIP_AUTH is false
   // For now, return error since native modules aren't available
-  return { success: false, error: 'Cognito auth requires native build. Enable DEV_MODE_SKIP_AUTH for testing.' };
+  return {
+    success: false,
+    error:
+      'Cognito auth requires native build. Enable DEV_MODE_SKIP_AUTH for testing.',
+  };
 }
 
-export async function signUp(email: string, password: string, name: string): Promise<AuthResult> {
+export async function signUp(
+  email: string,
+  password: string,
+  name: string,
+): Promise<AuthResult> {
   if (DEV_MODE_SKIP_AUTH) {
     console.log('[DEV MODE] Bypassing Cognito signup for:', email);
     // In dev mode, simulate successful signup and auto-sign-in
@@ -47,7 +58,11 @@ export async function signUp(email: string, password: string, name: string): Pro
     return { success: false, error: 'All fields required' };
   }
 
-  return { success: false, error: 'Cognito auth requires native build. Enable DEV_MODE_SKIP_AUTH for testing.' };
+  return {
+    success: false,
+    error:
+      'Cognito auth requires native build. Enable DEV_MODE_SKIP_AUTH for testing.',
+  };
 }
 
 export async function signOut(): Promise<void> {
